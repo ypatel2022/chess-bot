@@ -53,7 +53,7 @@ public static class Chess
 
     public static Dictionary<Piece, GameObject> pieceToPrefab = new Dictionary<Piece, GameObject>();
 
-    public static Dictionary<byte, GameObject> byteToPrefab = new Dictionary<byte, GameObject>();
+    public static Dictionary<byte, SpriteRenderer> byteToPrefab = new Dictionary<byte, SpriteRenderer>();
 
     public static BoardSquare[,] boardUI = new BoardSquare[8, 8];
 
@@ -215,12 +215,9 @@ public static class Chess
                 else
                 {
                     boardUI[i, j].pieceImage.enabled = true;
-                    //Piece piece = new Piece(board[i, j].type, board[i, j].colour);
                     byte piece = newBoard[i, j];
-                    boardUI[i, j].pieceImage.sprite = byteToPrefab[piece].GetComponent<SpriteRenderer>().sprite;
+                    boardUI[i, j].pieceImage.sprite = byteToPrefab[piece].sprite;
                     newBoard[i, j] = piece;
-                    //piecesOnTheBoard.Add(board[i, j].pieceOnSquare);
-                    //piecesOnBoard.Add(piece);
 
                     if (IsPieceType(piece, PieceStuff.King))
                     {
@@ -449,28 +446,6 @@ public static class Chess
         }
         return currentCastling;
 
-        /*if (currentCastling == CastlingOptions.None || optionToRemove == CastlingOptions.None)
-        {
-            // don't need to do anything
-            return currentCastling;
-        }
-        else if (optionToRemove == CastlingOptions.Both)
-        {
-            return CastlingOptions.None;
-        }
-        else if (optionToRemove == currentCastling)
-        {
-            return CastlingOptions.None;
-        }
-        else if (currentCastling == CastlingOptions.Both)
-        {
-            if (optionToRemove == CastlingOptions.Kingside)
-            {
-                return CastlingOptions.Queenside;
-            }
-            return CastlingOptions.Kingside;
-        }
-        return currentCastling;*/
     }
 
     public static int PawnDirection(Colour colour)
@@ -500,7 +475,7 @@ public static class Chess
         return PieceStuff.Black;
     }
 
-    public static void NewMakeMoveTemporary(ref byte[,] chessBoard, Move move, bool undo, byte capturedPieceForUndo = PieceStuff.None, CastlingOptions oldCastling = CastlingOptions.None)
+    public static void MakeMoveTemporary(ref byte[,] chessBoard, Move move, bool undo, byte capturedPieceForUndo = PieceStuff.None, CastlingOptions oldCastling = CastlingOptions.None)
     {
 
         if (!undo)
@@ -509,52 +484,40 @@ public static class Chess
             byte pieceTypeMoving = GetPieceType(chessBoard[move.startPos.x, move.startPos.y]);
             Colour colourMoving = ByteToColour(colourMovingByte);
 
-            //piecesOnBoard[piece].position = new Position(move.startPos.x, move.startPos.y);
 
             chessBoard[move.targetPos.x, move.targetPos.y] = chessBoard[move.startPos.x, move.startPos.y];
             chessBoard[move.startPos.x, move.startPos.y] = PieceStuff.None;
 
-            // Debug.Log($"{kingsPosition[Colour.White].x}, {kingsPosition[Colour.White].y}");
 
             if (pieceTypeMoving == PieceStuff.King)
             {
                 kingsPosition[colourMoving] = new Position(move.targetPos.x, move.targetPos.y);
                 // king can no longer castle after moving
                 kingsCastling[colourMoving] = CastlingOptions.None;
-                //Debug.Log(colourMoving + " King changing castling options, current are " + kingsCastling[colourMoving]);
             }
             else if (pieceTypeMoving == PieceStuff.Rook && kingsCastling[colourMoving] != CastlingOptions.None)
             {
-                //Debug.Log(colourMoving + " Rook changing castling options");
                 if (move.startPos.x == 7 && (kingsCastling[colourMoving] == CastlingOptions.Both || kingsCastling[colourMoving] == CastlingOptions.Kingside))
                 {
                     // your boy the king side rook moved
-                    //kingsCastling[colourMoving] = ChangeCastlingOptions(kingsCastling[colourMoving], CastlingOptions.Kingside);
                     kingsCastling[colourMoving] = (kingsCastling[colourMoving] == CastlingOptions.Both) ? CastlingOptions.Queenside : CastlingOptions.None;
-                    Debug.Log("Kingside rook moved");
                 }
                 else if (move.startPos.x == 0 && (kingsCastling[colourMoving] == CastlingOptions.Both || kingsCastling[colourMoving] == CastlingOptions.Queenside))
                 {
                     // your boy the queen side rook moved
-                    //kingsCastling[colourMoving] = ChangeCastlingOptions(kingsCastling[colourMoving], CastlingOptions.Queenside);
                     kingsCastling[colourMoving] = (kingsCastling[colourMoving] == CastlingOptions.Both) ? CastlingOptions.Kingside : CastlingOptions.None;
-                    Debug.Log("Queenside rook moved");
                 }
             }
 
             if (move.castling == CastlingOptions.Kingside)
             {
-                //Move rookMove = new Move(new Position(7, move.targetPos.y), new Position(5, move.targetPos.y));
                 chessBoard[5, move.targetPos.y] = chessBoard[7, move.targetPos.y];
                 chessBoard[7, move.targetPos.y] = PieceStuff.None;
-                //MakeMoveTemporary(ref chessBoard, rookMove, false);
             }
             else if (move.castling == CastlingOptions.Queenside)
             {
-                //Move rookMove = new Move(new Position(0, move.targetPos.y), new Position(3, move.targetPos.y));
                 chessBoard[3, move.targetPos.y] = chessBoard[0, move.targetPos.y];
                 chessBoard[0, move.targetPos.y] = PieceStuff.None;
-                //MakeMoveTemporary(ref chessBoard, rookMove, false);
             }
             else if (move.newPromotion != PieceStuff.None)
             {
@@ -583,25 +546,16 @@ public static class Chess
 
             if (move.castling == CastlingOptions.Kingside)
             {
-                //Debug.Log("Rook is Castling kingside");
-                //Move rookMove = new Move(new Position(5, move.targetPos.y), new Position(7, move.targetPos.y));
                 chessBoard[7, move.startPos.y] = chessBoard[5, move.startPos.y];
                 chessBoard[5, move.startPos.y] = PieceStuff.None;
-
-
-                //MakeMoveTemporary(ref chessBoard, rookMove, false);
             }
             else if (move.castling == CastlingOptions.Queenside)
             {
-                //Debug.Log("Rook is Castling queenside");
-                //Move rookMove = new Move(new Position(3, move.targetPos.y), new Position(0, move.targetPos.y));
                 chessBoard[0, move.startPos.y] = chessBoard[3, move.startPos.y];
                 chessBoard[3, move.startPos.y] = PieceStuff.None;
-                //MakeMoveTemporary(ref chessBoard, rookMove, false);
             }
             else if (move.promotion != PieceType.None)
             {
-                //Debug.Log("Promoting my friend");
                 chessBoard[move.startPos.x, move.startPos.y] = (byte)(colourMovingByte + PieceStuff.Pawn);
             }
             else if (move.enPassant)
@@ -612,143 +566,6 @@ public static class Chess
             }
             kingsCastling[colourMoving] = oldCastling;
 
-            if (oldCastling != CastlingOptions.None)
-            {
-                // have to reset after the rooks are done undoing if they need to
-                if (colourMoving == Colour.White)
-                {
-                    //Debug.Log("Undoing castling to " + oldCastling);
-                }
-
-            }
-        }
-    }
-
-    public static void MakeMoveTemporary(ref Piece[,] chessBoard, Move move, bool undo, Piece capturedPieceForUndo = new Piece(), CastlingOptions oldCastling = CastlingOptions.None)
-    {
-        if (!undo)
-        {
-            Piece piece = chessBoard[move.startPos.x, move.startPos.y];
-            Colour colourMoving = chessBoard[move.startPos.x, move.startPos.y].colour;
-            PieceType typeMoving = chessBoard[move.startPos.x, move.startPos.y].type;
-
-            //piecesOnBoard[piece].position = new Position(move.startPos.x, move.startPos.y);
-
-            chessBoard[move.targetPos.x, move.targetPos.y] = chessBoard[move.startPos.x, move.startPos.y];
-            chessBoard[move.targetPos.x, move.targetPos.y].position = new Position(move.targetPos.x, move.targetPos.y);
-            chessBoard[move.startPos.x, move.startPos.y] = new Piece();
-
-            if (typeMoving == PieceType.King)
-            {
-                kingsPosition[colourMoving] = new Position(move.targetPos.x, move.targetPos.y);
-                // king can no longer castle after moving
-                kingsCastling[colourMoving] = CastlingOptions.None;
-                //Debug.Log(colourMoving + " King changing castling options, current are " + kingsCastling[colourMoving]);
-            }
-            else if (typeMoving == PieceType.Rook && kingsCastling[colourMoving] != CastlingOptions.None)
-            {
-                //Debug.Log(colourMoving + " Rook changing castling options");
-                if (move.startPos.x == 7 && (kingsCastling[colourMoving] == CastlingOptions.Both || kingsCastling[colourMoving] == CastlingOptions.Kingside))
-                {
-                    // your boy the king side rook moved
-                    //kingsCastling[colourMoving] = ChangeCastlingOptions(kingsCastling[colourMoving], CastlingOptions.Kingside);
-                    kingsCastling[colourMoving] = (kingsCastling[colourMoving] == CastlingOptions.Both) ? CastlingOptions.Queenside : CastlingOptions.None;
-                    Debug.Log("Kingside rook moved");
-                }
-                else if (move.startPos.x == 0 && (kingsCastling[colourMoving] == CastlingOptions.Both || kingsCastling[colourMoving] == CastlingOptions.Queenside))
-                {
-                    // your boy the queen side rook moved
-                    //kingsCastling[colourMoving] = ChangeCastlingOptions(kingsCastling[colourMoving], CastlingOptions.Queenside);
-                    kingsCastling[colourMoving] = (kingsCastling[colourMoving] == CastlingOptions.Both) ? CastlingOptions.Kingside : CastlingOptions.None;
-                    Debug.Log("Queenside rook moved");
-                }
-            }
-
-            if (move.castling == CastlingOptions.Kingside)
-            {
-                //Move rookMove = new Move(new Position(7, move.targetPos.y), new Position(5, move.targetPos.y));
-                chessBoard[5, move.targetPos.y] = chessBoard[7, move.targetPos.y];
-                chessBoard[7, move.targetPos.y] = new Piece();
-                chessBoard[5, move.targetPos.y].position = new Position(5, move.targetPos.y);
-                //MakeMoveTemporary(ref chessBoard, rookMove, false);
-            }
-            else if (move.castling == CastlingOptions.Queenside)
-            {
-                //Move rookMove = new Move(new Position(0, move.targetPos.y), new Position(3, move.targetPos.y));
-                chessBoard[3, move.targetPos.y] = chessBoard[0, move.targetPos.y];
-                chessBoard[0, move.targetPos.y] = new Piece();
-                chessBoard[3, move.targetPos.y].position = new Position(3, move.targetPos.y);
-                //MakeMoveTemporary(ref chessBoard, rookMove, false);
-            }
-            else if (move.promotion != PieceType.None)
-            {
-                chessBoard[move.targetPos.x, move.targetPos.y].type = move.promotion;
-            }
-            else if (move.enPassant)
-            {
-                // do en passant
-                // piece behind the target square is captured
-                chessBoard[move.targetPos.x, move.targetPos.y - PawnDirection(colourMoving)] = new Piece();
-            }
-        }
-        else
-        {
-            Colour colourMoving = chessBoard[move.targetPos.x, move.targetPos.y].colour;
-            PieceType typeMoving = chessBoard[move.targetPos.x, move.targetPos.y].type;
-
-            chessBoard[move.startPos.x, move.startPos.y] = chessBoard[move.targetPos.x, move.targetPos.y];
-            chessBoard[move.startPos.x, move.startPos.y].position = new Position(move.startPos.x, move.startPos.y);
-            chessBoard[move.targetPos.x, move.targetPos.y] = capturedPieceForUndo;
-            chessBoard[move.targetPos.x, move.targetPos.y].position = new Position(move.targetPos.x, move.targetPos.y);
-
-            if (typeMoving == PieceType.King)
-            {
-                kingsPosition[colourMoving] = new Position(move.startPos.x, move.startPos.y);
-            }
-
-            if (move.castling == CastlingOptions.Kingside)
-            {
-                //Debug.Log("Rook is Castling kingside");
-                //Move rookMove = new Move(new Position(5, move.targetPos.y), new Position(7, move.targetPos.y));
-                chessBoard[7, move.startPos.y] = chessBoard[5, move.startPos.y];
-                chessBoard[5, move.startPos.y] = new Piece();
-                chessBoard[7, move.startPos.y].position = new Position(7, move.startPos.y);
-
-
-                //MakeMoveTemporary(ref chessBoard, rookMove, false);
-            }
-            else if (move.castling == CastlingOptions.Queenside)
-            {
-                //Debug.Log("Rook is Castling queenside");
-                //Move rookMove = new Move(new Position(3, move.targetPos.y), new Position(0, move.targetPos.y));
-                chessBoard[0, move.startPos.y] = chessBoard[3, move.startPos.y];
-                chessBoard[3, move.startPos.y] = new Piece();
-                chessBoard[0, move.startPos.y].position = new Position(0, move.startPos.y);
-                //MakeMoveTemporary(ref chessBoard, rookMove, false);
-            }
-            else if (move.promotion != PieceType.None)
-            {
-                //Debug.Log("Promoting my friend");
-                chessBoard[move.startPos.x, move.startPos.y].type = PieceType.Pawn;
-            }
-            else if (move.enPassant)
-            {
-                // do en passant
-                // piece behind the target square is captured
-                chessBoard[move.targetPos.x, move.targetPos.y - PawnDirection(colourMoving)] = new Piece(PieceType.Pawn, SwitchColour(colourMoving),
-                    new Position(move.startPos.x, move.startPos.y - PawnDirection(colourMoving)));
-            }
-            kingsCastling[colourMoving] = oldCastling;
-
-            if (oldCastling != CastlingOptions.None)
-            {
-                // have to reset after the rooks are done undoing if they need to
-                if (colourMoving == Colour.White)
-                {
-                    //Debug.Log("Undoing castling to " + oldCastling);
-                }
-
-            }
         }
     }
 
@@ -757,13 +574,11 @@ public static class Chess
         Colour colourMoving = chessBoard[move.startPos.x, move.startPos.y].colour;
         PieceType typeMoving = chessBoard[move.startPos.x, move.startPos.y].type;
         // replace target position square with the piece that is being moved
-        //piecesOnTheBoard.Remove(chessBoard[move.startPos.x, move.startPos.y].pieceOnSquare);
         chessBoard[move.targetPos.x, move.targetPos.y] = chessBoard[move.startPos.x, move.startPos.y];
         chessBoard[move.targetPos.x, move.targetPos.y].position = new Position(move.targetPos.x, move.targetPos.y);
 
         if (move.promotion != PieceType.None && !hasPieceToReverse)
         {
-            Debug.Log("Promoting my friend");
             chessBoard[move.targetPos.x, move.targetPos.y].type = move.promotion;
         }
 
@@ -784,13 +599,11 @@ public static class Chess
             {
                 if (move.castling == CastlingOptions.Kingside)
                 {
-                    Debug.Log("Rook is Castling kingside");
                     Move rookMove = new Move(new Position(7, move.targetPos.y), new Position(5, move.targetPos.y));
                     MakeMoveTemporaryf(ref chessBoard, rookMove, new Piece(), false);
                 }
                 else if (move.castling == CastlingOptions.Queenside)
                 {
-                    Debug.Log("Rook is Castling queenside");
                     Move rookMove = new Move(new Position(0, move.targetPos.y), new Position(3, move.targetPos.y));
                     MakeMoveTemporaryf(ref chessBoard, rookMove, new Piece(), false);
                 }
@@ -812,7 +625,6 @@ public static class Chess
                     CastlingOptions.Queenside);
             }
         }
-        //piecesOnTheBoard.Add(chessBoard[move.targetPos.x, move.targetPos.y]);
 
         // change position on the the target piece variable
         chessBoard[move.startPos.x, move.startPos.y] = targetPiece;
@@ -823,7 +635,6 @@ public static class Chess
             if (move.castling == CastlingOptions.Kingside)
             {
                 // we have to undo castling
-                Debug.Log("Undoing rook kingside castling");
                 Move rookMove = new Move(new Position(5, move.targetPos.y), new Position(7, move.targetPos.y));
                 MakeMoveTemporaryf(ref chessBoard, rookMove, new Piece(), false);
             }
@@ -834,7 +645,6 @@ public static class Chess
                 MakeMoveTemporaryf(ref chessBoard, rookMove, new Piece(), false);
             }
 
-            //piecesOnTheBoard.Add(targetPiece);
             if (chessBoard[move.targetPos.x, move.targetPos.y].type == PieceType.King)
             {
                 kingsPosition[targetPiece.colour] = new Position(move.targetPos.x, move.targetPos.y);
@@ -850,18 +660,11 @@ public static class Chess
                     new Position(move.startPos.x, move.startPos.y - PawnDirection(colourMoving)));
             }
         }
-        //return chessBoard;
-
-
     }
 
     public static bool SquareExists(int x, int y)
     {
-        if (x < 0 || x > 7 || y < 0 || y > 7)
-        {
-            return false;
-        }
-        return true;
+        return x >= 0 && x <= 7 && y >= 0 && y <= 7;
     }
 
     public static void PromotePawn(ref Piece[,] board, Piece pawn, PieceType type = PieceType.Queen)
@@ -884,7 +687,7 @@ public static class Chess
         return copy;
     }
 
-    public static List<Move> NewGenerateMovesForColour(byte colourToMove, byte[,] board)
+    public static List<Move> GenerateMovesForColour(byte colourToMove, byte[,] board)
     {
         List<Move> movesForColour = new List<Move>();
 
@@ -894,7 +697,7 @@ public static class Chess
             {
                 if (GetColour(board[i, j]) == colourToMove && GetPieceType(board[i, j]) != PieceStuff.None)
                 {
-                    List<Move> movesForPiece = NewGenerateMovesForPiece(board[i, j], board, new Position(i, j));
+                    List<Move> movesForPiece = GenerateMovesForPiece(board[i, j], board, new Position(i, j));
 
                     if (movesForPiece.Count > 0)
                     {
@@ -906,56 +709,8 @@ public static class Chess
         return movesForColour;
     }
 
-    public static List<Move> GenerateMovesForColour(Colour colourToMove, Piece[,] board)
-    {
-        List<Move> movesForColour = new List<Move>();
-
-        /*foreach (Piece piece in piecesOnTheBoard)
-        {
-            if (piece.colour == colourToMove)
-            {
-                List<Move> movesForPiece = GenerateMovesForPiece(piece, board);
-
-                if (movesForPiece.Count > 0)
-                {
-                    movesForColour.AddRange(movesForPiece);
-                }
-            }
-        }*/
-
-        /*foreach (Piece piece in piecesOnBoard)
-        {
-            if (piece.colour == colourToMove)
-            {
-                List<Move> movesForPiece = GenerateMovesForPiece(piece, board);
-
-                if (movesForPiece.Count > 0)
-                {
-                    movesForColour.AddRange(movesForPiece);
-                }
-            }
-        }*/
-
-        for (int i = 0; i < 8; i++)
-        {
-            for (int j = 0; j < 8; j++)
-            {
-                if (board[i, j].colour == colourToMove && board[i, j].type != PieceType.None)
-                {
-                    List<Move> movesForPiece = GenerateMovesForPiece(board[i, j], board);
-
-                    if (movesForPiece.Count > 0)
-                    {
-                        movesForColour.AddRange(movesForPiece);
-                    }
-                }
-            }
-        }
-
-        return movesForColour;
-    }
-
-    public static List<Move> NewGenerateMovesForPiece(byte piece, byte[,] board, Position position)
+    
+    public static List<Move> GenerateMovesForPiece(byte piece, byte[,] board, Position position)
     {
         List<Move> legalMoves = new List<Move>();
         int x = position.x;
@@ -977,7 +732,7 @@ public static class Chess
                     }
 
                     Move move = new Move(position, new Position(x + i, y + j));
-                    if (SquareExists(x + i, y + j) && NewIsLegalMove(board, piece, move, colourByte) && NewIsKingSafeAfterMove(board, colourByte, move))
+                    if (SquareExists(x + i, y + j) && IsLegalMove(board, piece, move, colourByte) && IsKingSafeAfterMove(board, colourByte, move))
                     {
                         //Debug.Log("A king move");
                         //if (!move.targetPos.Equals(move.startPos))
@@ -996,9 +751,9 @@ public static class Chess
                     // add kingside castling move
                     Move move = new Move(position, new Position(x + 2, y), PieceType.None, CastlingOptions.Kingside);
 
-                    if (NewIsLegalMove(board, piece, move, colourByte) && NewIsKingSafeAfterMove(board, colourByte, move))
+                    if (IsLegalMove(board, piece, move, colourByte) && IsKingSafeAfterMove(board, colourByte, move))
                     {
-                        Debug.Log("Can castle kingside");
+                        // Debug.Log("Can castle kingside");
                         legalMoves.Add(move);
 
                     }
@@ -1012,9 +767,9 @@ public static class Chess
                     // add queenside castling move
                     Move move = new Move(position, new Position(x - 2, y), PieceType.None, CastlingOptions.Queenside);
 
-                    if (NewIsLegalMove(board, piece, move, colourByte) && NewIsKingSafeAfterMove(board, colourByte, move))
+                    if (IsLegalMove(board, piece, move, colourByte) && IsKingSafeAfterMove(board, colourByte, move))
                     {
-                        Debug.Log("Can castle queenside");
+                        // Debug.Log("Can castle queenside");
                         legalMoves.Add(move);
 
                     }
@@ -1026,7 +781,7 @@ public static class Chess
             foreach (Vector2Int offset in knightOffsets)
             {
                 Move move = new Move(position, new Position(x + offset.x, y + offset.y));
-                if (SquareExists(x + offset.x, y + offset.y) && NewIsLegalMove(board, piece, move, colourByte) && NewIsKingSafeAfterMove(board, colourByte, move))
+                if (SquareExists(x + offset.x, y + offset.y) && IsLegalMove(board, piece, move, colourByte) && IsKingSafeAfterMove(board, colourByte, move))
                 {
                     if (!move.targetPos.Equals(move.startPos))
                     {
@@ -1042,7 +797,7 @@ public static class Chess
                 for (int j = -1; j <= 1; j += 2)
                 {
                     Move move = new Move(position, new Position(x + i, y + i * j));
-                    if (SquareExists(x + i, y + i * j) && NewIsLegalMove(board, piece, move, colourByte) && NewIsKingSafeAfterMove(board, colourByte, move))
+                    if (SquareExists(x + i, y + i * j) && IsLegalMove(board, piece, move, colourByte) && IsKingSafeAfterMove(board, colourByte, move))
                     {
                         //Debug.Log("A bishop move");
                         if (!move.targetPos.Equals(move.startPos))
@@ -1058,7 +813,7 @@ public static class Chess
             for (int i = -x; i < 8 - x; i++)
             {
                 Move move = new Move(position, new Position(x + i, y));
-                if (SquareExists(i + x, y) && NewIsLegalMove(board, piece, move, colourByte) && NewIsKingSafeAfterMove(board, colourByte, move))
+                if (SquareExists(i + x, y) && IsLegalMove(board, piece, move, colourByte) && IsKingSafeAfterMove(board, colourByte, move))
                 {
                     //Debug.Log("A rook move");
                     if (!move.targetPos.Equals(move.startPos))
@@ -1073,7 +828,7 @@ public static class Chess
             for (int j = 0 - y; j < 8 - y; j++)
             {
                 Move move = new Move(position, new Position(x, y + j));
-                if (SquareExists(x, y + j) && NewIsLegalMove(board, piece, move, colourByte) && NewIsKingSafeAfterMove(board, colourByte, move))
+                if (SquareExists(x, y + j) && IsLegalMove(board, piece, move, colourByte) && IsKingSafeAfterMove(board, colourByte, move))
                 {
                     //Debug.Log("A rook move");
                     if (!move.targetPos.Equals(move.startPos))
@@ -1092,7 +847,7 @@ public static class Chess
                 for (int j = -1; j <= 1; j += 2)
                 {
                     Move move = new Move(position, new Position(x + i, y + i * j));
-                    if (SquareExists(x + i, y + i * j) && NewIsLegalMove(board, piece, move, colourByte) && NewIsKingSafeAfterMove(board, colourByte, move))
+                    if (SquareExists(x + i, y + i * j) && IsLegalMove(board, piece, move, colourByte) && IsKingSafeAfterMove(board, colourByte, move))
                     {
                         //Debug.Log("A bishop move");
                         if (!move.targetPos.Equals(move.startPos))
@@ -1106,7 +861,7 @@ public static class Chess
             for (int i = 0 - x; i < 8 - x; i++)
             {
                 Move move = new Move(position, new Position(x + i, y));
-                if (SquareExists(i + x, y) && NewIsLegalMove(board, piece, move, colourByte) && NewIsKingSafeAfterMove(board, colourByte, move))
+                if (SquareExists(i + x, y) && IsLegalMove(board, piece, move, colourByte) && IsKingSafeAfterMove(board, colourByte, move))
                 {
                     //Debug.Log("A queen rook-like move");
                     if (!move.targetPos.Equals(move.startPos))
@@ -1121,7 +876,7 @@ public static class Chess
             for (int j = 0 - y; j < 8 - y; j++)
             {
                 Move move = new Move(position, new Position(x, y + j));
-                if (SquareExists(x, y + j) && NewIsLegalMove(board, piece, move, colourByte) && NewIsKingSafeAfterMove(board, colourByte, move))
+                if (SquareExists(x, y + j) && IsLegalMove(board, piece, move, colourByte) && IsKingSafeAfterMove(board, colourByte, move))
                 {
                     //Debug.Log("A queen rook-like move");
                     if (!move.targetPos.Equals(move.startPos))
@@ -1146,9 +901,9 @@ public static class Chess
                 Move move = new Move(position, new Position(x + i, y + direction));
                 if (SquareExists(x + i, y + direction))
                 {
-                    if (NewIsLegalMove(board, piece, move, colourByte))
+                    if (IsLegalMove(board, piece, move, colourByte))
                     {
-                        if (NewIsKingSafeAfterMove(board, colourByte, move))
+                        if (IsKingSafeAfterMove(board, colourByte, move))
                         {
                             if (!move.targetPos.Equals(move.startPos))
                             {
@@ -1179,15 +934,15 @@ public static class Chess
                     //Debug.Log((x + 1) + ", " + (y + direction) + " is not a legal move");
                 }
                 //else
-                //    Debug.Log((x + 1) + ", " + (y + direction) + " does not exist");
+                //Debug.Log((x + 1) + ", " + (y + direction) + " does not exist");
 
 
                 move = new Move(position, new Position(x + i, y + direction * 2));
                 if (SquareExists(x + i, y + direction * 2))
                 {
-                    if (NewIsLegalMove(board, piece, move, colourByte))
+                    if (IsLegalMove(board, piece, move, colourByte))
                     {
-                        if (NewIsKingSafeAfterMove(board, colourByte, move))
+                        if (IsKingSafeAfterMove(board, colourByte, move))
                         {
                             legalMoves.Add(move);
                         }
@@ -1199,300 +954,8 @@ public static class Chess
         return legalMoves;
     }
 
-    public static List<Move> GenerateMovesForPiece(Piece piece, Piece[,] board)
-    {
-        List<Move> legalMoves = new List<Move>();
-        int x = piece.position.x;
-        int y = piece.position.y;
 
-        if (piece.type == PieceType.King)
-        {
-            for (int i = -1; i <= 1; i++)
-            {
-                for (int j = -1; j <= 1; j++)
-                {
-                    Move move = new Move(piece.position, new Position(x + i, y + j));
-                    if (SquareExists(x + i, y + j) && IsLegalMove(board, piece, move, piece.colour) && OldIsKingSafeAfterMove(board, colourToMove, move))
-                    {
-                        //Debug.Log("A king move");
-                        if (!move.targetPos.Equals(move.startPos))
-                        {
-                            legalMoves.Add(move);
-                        }
-
-                    }
-
-                }
-            }
-            if (kingsCastling[piece.colour] == CastlingOptions.Kingside || kingsCastling[piece.colour] == CastlingOptions.Both)
-            {
-                // can castle kingside
-                if (board[5, y].type == PieceType.None && board[6, y].type == PieceType.None && board[7, y].type == PieceType.Rook && board[7, y].colour == piece.colour)
-                {
-                    // add kingside castling move
-                    Move move = new Move(piece.position, new Position(x + 2, y), PieceType.None, CastlingOptions.Kingside);
-
-                    if (IsLegalMove(board, piece, move, piece.colour) && OldIsKingSafeAfterMove(board, colourToMove, move))
-                    {
-                        Debug.Log("Can castle kingside");
-                        legalMoves.Add(move);
-
-                    }
-                }
-            }
-            if (kingsCastling[piece.colour] == CastlingOptions.Queenside || kingsCastling[piece.colour] == CastlingOptions.Both)
-            {
-                // can castle queenside
-                if (board[1, y].type == PieceType.None && board[2, y].type == PieceType.None && board[3, y].type == PieceType.None && board[0, y].type == PieceType.Rook && board[0, y].colour == piece.colour)
-                {
-                    // add queenside castling move
-                    Move move = new Move(piece.position, new Position(x - 2, y), PieceType.None, CastlingOptions.Queenside);
-
-                    if (IsLegalMove(board, piece, move, piece.colour) && OldIsKingSafeAfterMove(board, colourToMove, move))
-                    {
-                        Debug.Log("Can castle queenside");
-                        legalMoves.Add(move);
-
-                    }
-                }
-            }
-        }
-        else if (piece.type == PieceType.Knight)
-        {
-            foreach (Vector2Int offset in knightOffsets)
-            {
-                Move move = new Move(piece.position, new Position(x + offset.x, y + offset.y));
-                if (SquareExists(x + offset.x, y + offset.y) && IsLegalMove(board, piece, move, piece.colour) && OldIsKingSafeAfterMove(board, colourToMove, move))
-                {
-                    if (!move.targetPos.Equals(move.startPos))
-                    {
-                        legalMoves.Add(move);
-                    }
-                }
-            }
-            /*for (int i = -2; i <= 2; i += 4)
-            {
-                for (int j = -1; j <= 1; j += 2)
-                {
-                    Move move = new Move(piece.position, new Position(x + i, y + j));
-                    if (SquareExists(x + i, y + j) && IsLegalMove(board, piece, move, piece.colour) && IsKingSafeAfterMove(board, colourToMove, move))
-                    {
-                        legalMoves.Add(move);
-                    }
-                }
-            }
-
-            for (int i = -1; i <= 1; i += 2)
-            {
-                for (int j = -2; j <= 2; j += 4)
-                {
-                    Move move = new Move(piece.position, new Position(x + i, y + j));
-                    if (SquareExists(x + i, y + j) && IsLegalMove(board, piece, move, piece.colour) && IsKingSafeAfterMove(board, colourToMove, move))
-                    {
-                        legalMoves.Add(move);
-                    }
-
-                }
-            }*/
-        }
-        else if (piece.type == PieceType.Bishop)
-        {
-            /*for (int j = -1; j <= 1; j+=2)
-            {
-                for (int i = 0 - x; i < 8 - x; i++)
-                {
-                    Move move = new Move(piece.position, new Position(x + i, y + i * j));
-                    if (SquareExists(x + i, y + i * j) && IsLegalMove(board, piece, move, piece.colour) && IsKingSafeAfterMove(board, colourToMove, move))
-                    {
-                        //Debug.Log("A bishop move");
-                        if (!move.targetPos.Equals(move.startPos))
-                        {
-                            legalMoves.Add(move);
-                        }
-                    }
-                    else if (i < 0)
-                        i = 0;
-                    else if (i > 0)
-                        break;
-                }
-            }*/
-
-            for (int i = 0 - x; i < 8 - x; i++)
-            {
-                for (int j = -1; j <= 1; j += 2)
-                {
-                    Move move = new Move(piece.position, new Position(x + i, y + i * j));
-                    if (SquareExists(x + i, y + i * j) && IsLegalMove(board, piece, move, piece.colour) && OldIsKingSafeAfterMove(board, colourToMove, move))
-                    {
-                        //Debug.Log("A bishop move");
-                        if (!move.targetPos.Equals(move.startPos))
-                        {
-                            legalMoves.Add(move);
-                        }
-                    }
-                }
-            }
-        }
-        else if (piece.type == PieceType.Rook)
-        {
-            for (int i = 0 - x; i < 8 - x; i++)
-            {
-                Move move = new Move(piece.position, new Position(x + i, y));
-                if (SquareExists(i + x, y) && IsLegalMove(board, piece, move, piece.colour) && OldIsKingSafeAfterMove(board, colourToMove, move))
-                {
-                    //Debug.Log("A rook move");
-                    if (!move.targetPos.Equals(move.startPos))
-                    {
-                        legalMoves.Add(move);
-                    }
-                }
-                /*else
-                    break;*/
-            }
-
-            for (int j = 0 - y; j < 8 - y; j++)
-            {
-                Move move = new Move(piece.position, new Position(x, y + j));
-                if (SquareExists(x, y + j) && IsLegalMove(board, piece, move, piece.colour) && OldIsKingSafeAfterMove(board, colourToMove, move))
-                {
-                    //Debug.Log("A rook move");
-                    if (!move.targetPos.Equals(move.startPos))
-                    {
-                        legalMoves.Add(move);
-                    }
-                }
-                /*else
-                    break;*/
-            }
-        }
-        else if (piece.type == PieceType.Queen)
-        {
-            /*for (int j = -1; j <= 1; j += 2)
-            {
-                for (int i = 0 - x; i < 8 - x; i++)
-                {
-                    Move move = new Move(piece.position, new Position(x + i, y + i * j));
-                    if (SquareExists(x + i, y + i * j) && IsLegalMove(board, piece, move, piece.colour) && IsKingSafeAfterMove(board, colourToMove, move))
-                    {
-                        //Debug.Log("A bishop move");
-                        if (!move.targetPos.Equals(move.startPos))
-                        {
-                            legalMoves.Add(move);
-                        }
-                    }
-                    else if (i < 0)
-                        i = 0;
-                    else if (i > 0)
-                        break;
-                }
-            }*/
-            for (int i = 0 - x; i < 8 - x; i++)
-            {
-                for (int j = -1; j <= 1; j += 2)
-                {
-                    Move move = new Move(piece.position, new Position(x + i, y + i * j));
-                    if (SquareExists(x + i, y + i * j) && IsLegalMove(board, piece, move, piece.colour) && OldIsKingSafeAfterMove(board, colourToMove, move))
-                    {
-                        //Debug.Log("A bishop move");
-                        if (!move.targetPos.Equals(move.startPos))
-                        {
-                            legalMoves.Add(move);
-                        }
-                    }
-                }
-            }
-
-            for (int i = 0 - x; i < 8 - x; i++)
-            {
-                Move move = new Move(piece.position, new Position(x + i, y));
-                if (SquareExists(i + x, y) && IsLegalMove(board, piece, move, piece.colour) && OldIsKingSafeAfterMove(board, colourToMove, move))
-                {
-                    //Debug.Log("A queen rook-like move");
-                    if (!move.targetPos.Equals(move.startPos))
-                    {
-                        legalMoves.Add(move);
-                    }
-                }
-                /*else
-                    break;*/
-            }
-
-            for (int j = 0 - y; j < 8 - y; j++)
-            {
-                Move move = new Move(piece.position, new Position(x, y + j));
-                if (SquareExists(x, y + j) && IsLegalMove(board, piece, move, piece.colour) && OldIsKingSafeAfterMove(board, colourToMove, move))
-                {
-                    //Debug.Log("A queen rook-like move");
-                    if (!move.targetPos.Equals(move.startPos))
-                    {
-                        legalMoves.Add(move);
-                    }
-                }
-                /*else
-                    break;*/
-            }
-        }
-        else if (piece.type == PieceType.Pawn)
-        {
-            int direction = 1;
-            if (piece.colour == Colour.Black)
-            {
-                direction = -1;
-            }
-
-            for (int i = -1; i <= 1; i++)
-            {
-                Move move = new Move(piece.position, new Position(x + i, y + direction));
-                if (SquareExists(x + i, y + direction) && IsLegalMove(board, piece, move, piece.colour) && OldIsKingSafeAfterMove(board, colourToMove, move))
-                {
-                    //Debug.Log("A pawn move");
-                    if (!move.targetPos.Equals(move.startPos))
-                    {
-                        if ((direction == 1 && y == 6) || (direction == -1 && y == 1))
-                        {
-                            // pawn is promoting
-                            Move promotion = new Move(move.startPos, move.targetPos, PieceType.Queen);
-                            legalMoves.Add(promotion);
-                            promotion = new Move(move.startPos, move.targetPos, PieceType.Rook);
-                            legalMoves.Add(promotion);
-                            promotion = new Move(move.startPos, move.targetPos, PieceType.Bishop);
-                            legalMoves.Add(promotion);
-                            promotion = new Move(move.startPos, move.targetPos, PieceType.Knight);
-                            legalMoves.Add(promotion);
-                        }
-                        else
-                        {
-                            legalMoves.Add(move);
-                        }
-                    }
-                }
-
-                move = new Move(piece.position, new Position(x + i, y + direction * 2));
-                if (SquareExists(x + i, y + direction * 2) && IsLegalMove(board, piece, move, piece.colour) && OldIsKingSafeAfterMove(board, colourToMove, move))
-                {
-                    legalMoves.Add(move);
-                }
-            }
-        }
-
-        /*for (int i = 0; i < 8; i++)
-        {
-            for (int j = 0; j < 8; j++)
-            {
-                Move move = new Move(piece.position, new Position(i, j));
-                if (IsLegalMove(board, piece, move, piece.colour))
-                {
-                    legalMoves.Add(move);
-                }
-            }
-        }*/
-        //Move reverse = new Move(new Position(moveByPrevious.targetPos.x, moveByPrevious.targetPos.y), new Position(moveByPrevious.startPos.x, moveByPrevious.startPos.y));
-        //board = MakeMoveTemporary(board, reverse);
-
-        return legalMoves;
-    }
-
-    public static bool NewIsKingSafeAfterMove(byte[,] originalBoard, byte colourToMoveByte, Move move)
+    public static bool IsKingSafeAfterMove(byte[,] originalBoard, byte colourToMoveByte, Move move)
     {
         byte[,] chessBoardClone = (byte[,])originalBoard.Clone();
 
@@ -1502,12 +965,9 @@ public static class Chess
         CastlingOptions oldCastlingOptions = kingsCastling[colourToMove];
 
 
-        NewMakeMoveTemporary(ref chessBoardClone, move, false);
+        MakeMoveTemporary(ref chessBoardClone, move, false);
 
-        //Position thisKingPosition = FindPiecePosition(new Piece(PieceType.King, colourToMove), chessBoard);
         Position thisKingPosition = kingsPosition[colourToMove];
-        //if (colourToMoveByte == 8)
-        //    Debug.Log("The kings position is: " + thisKingPosition.x + ", " + thisKingPosition.y);
 
         Colour oppositeColour = SwitchColour(colourToMove);
         byte oppositeColourByte = SwitchByteColour(colourToMoveByte);
@@ -1521,12 +981,8 @@ public static class Chess
                 {
                     if (IsPieceType(chessBoardClone[thisKingPosition.x + knightOffsets[i].x, thisKingPosition.y + knightOffsets[i].y], PieceStuff.Knight))
                     {
-                        //MakeMoveTemporary(ref chessBoard, reverse, oldTargetSquare, true);
-                        //NewMakeMoveTemporary(chessBoard, move, true, oldTargetSquarePiece, oldCastlingOptions);
                         kingsCastling[colourToMove] = oldCastlingOptions;
 
-                        //Debug.Log("The knight position is " + (thisKingPosition.x + knightOffsets[i].x) + ", " + (thisKingPosition.y + knightOffsets[i].y));
-                        Debug.Log("Knight is around");
                         return false;
                     }
                 }
@@ -1540,8 +996,8 @@ public static class Chess
             {
                 if (i == 0 && j == 0)
                 {
-                    continue;
                     // this is the same square as the king
+                    continue;
                 }
 
                 // the king is safe here
@@ -1558,7 +1014,7 @@ public static class Chess
                         if (IsPieceType(chessBoardClone[thisKingPosition.x + i, thisKingPosition.y + j], PieceStuff.King))
                         {
                             kingsCastling[colourToMove] = oldCastlingOptions;
-                            Debug.Log("King Around");
+                            // Debug.Log("King Around");
                             return false;
                         }
                     }
@@ -1567,38 +1023,30 @@ public static class Chess
                 // check up, down, left, right
                 if ((i == 0 && j != 0) || (j == 0 && i != 0))
                 {
-
                     for (int k = 1; k < 8; k++)
                     {
-                        if (SquareExists(thisKingPosition.x + i * k, thisKingPosition.y + j * k))
+                        bool blackChecked = false;
+
+                        if (SquareExists(thisKingPosition.x + i * k, thisKingPosition.y + j * k) && !blackChecked)
                         {
+                            if (IsColour(chessBoardClone[thisKingPosition.x +i *k, thisKingPosition.y+j*k], colourToMoveByte))
+                            {
+                                break;
+                            }
+
+
                             if (IsColour(chessBoardClone[thisKingPosition.x + i * k, thisKingPosition.y + j * k], oppositeColourByte))
                             {
+                                blackChecked = true;
+
                                 if (IsPieceType(chessBoardClone[thisKingPosition.x + i * k, thisKingPosition.y + j * k], PieceStuff.Rook) ||
                                     IsPieceType(chessBoardClone[thisKingPosition.x + i * k, thisKingPosition.y + j * k], PieceStuff.Queen))
                                 {
 
-                                    //MakeMoveTemporary(ref chessBoard, reverse, oldTargetSquare, true);
-                                    //NewMakeMoveTemporary(chessBoard, move, true, oldTargetSquarePiece, oldCastlingOptions);
                                     kingsCastling[colourToMove] = oldCastlingOptions;
 
-                                    if (i == 0)
-                                    {
-                                        Debug.Log("vertical");
-                                        //Debug.Log("Vertical check by " + chessBoard[thisKingPosition.x + i * k, thisKingPosition.y + j * k].type);
-                                    }
-                                    else
-                                    {
-                                        Debug.Log("Horizonal");
-                                        //Debug.Log("Horizontal check by " + chessBoard[thisKingPosition.x + i * k, thisKingPosition.y + j * k].type);
-                                    }
                                     return false;
                                 }
-                            }
-                            else if (!IsPieceType(chessBoardClone[thisKingPosition.x + i * k, thisKingPosition.y + j * k], PieceStuff.None))
-                            {
-                                // piece blocking the path (enemy piece that cannot do damage from there or a friendly piece)
-                                break;
                             }
                         }
                         else
@@ -1624,10 +1072,7 @@ public static class Chess
                                 // check if pawn is above king (it will be a diagonal for sure already)
                                 if (thisKingPosition.y < thisKingPosition.y + j)
                                 {
-                                    //MakeMoveTemporary(ref chessBoard, reverse, oldTargetSquare, true);
-                                    //NewMakeMoveTemporary(chessBoard, move, true, oldTargetSquarePiece, oldCastlingOptions);
                                     kingsCastling[colourToMove] = oldCastlingOptions;
-                                    Debug.Log("Pawn above");
                                     return false;
                                 }
                             }
@@ -1636,10 +1081,7 @@ public static class Chess
                                 // check if pawn is below king (it will be a diagonal for sure already)
                                 if (thisKingPosition.y > thisKingPosition.y + j)
                                 {
-                                    //MakeMoveTemporary(ref chessBoard, reverse, oldTargetSquare, true);
-                                    //NewMakeMoveTemporary(chessBoard, move, true, oldTargetSquarePiece, oldCastlingOptions);
                                     kingsCastling[colourToMove] = oldCastlingOptions;
-                                    Debug.Log("Pawn below");
                                     return false;
                                 }
                             }
@@ -1649,17 +1091,21 @@ public static class Chess
                     // check diagnol for bishop, queen, and king
                     for (int k = 1; k < 8; k++)
                     {
+                        bool blackChecked = false;
+                        
                         if (SquareExists(thisKingPosition.x + i * k, thisKingPosition.y + j * k))
                         {
+                            if (IsColour(chessBoardClone[thisKingPosition.x + i * k, thisKingPosition.y + j * k], colourToMoveByte))
+                            {
+                                break;
+                            }
+
                             if (IsColour(chessBoardClone[thisKingPosition.x + i * k, thisKingPosition.y + j * k], oppositeColourByte))
                             {
+                                blackChecked = true;
                                 if (IsPieceType(chessBoardClone[thisKingPosition.x + i * k, thisKingPosition.y + j * k], PieceStuff.Queen) ||
                                     IsPieceType(chessBoardClone[thisKingPosition.x + i * k, thisKingPosition.y + j * k], PieceStuff.Bishop))
                                 {
-                                    //Debug.Log("Diagonal by " + chessBoard[thisKingPosition.x + i * k, thisKingPosition.y + j * k].type);
-                                    Debug.Log("diagonal");
-                                    //MakeMoveTemporary(ref chessBoard, reverse, oldTargetSquare, true);
-                                    //NewMakeMoveTemporary(chessBoard, move, true, oldTargetSquarePiece, oldCastlingOptions);
                                     kingsCastling[colourToMove] = oldCastlingOptions;
                                     return false;
                                 }
@@ -1668,202 +1114,16 @@ public static class Chess
                                     break;
                                 }
                             }
-                            //else if (!IsPieceType(chessBoardClone[thisKingPosition.x + i * k, thisKingPosition.y + j * k], PieceStuff.None))
-                            //{
-                            //    // encountered a piece
-                            //    Debug.Log("Encountered a piece: " + GetPieceType(chessBoardClone[thisKingPosition.x + i * k, thisKingPosition.y + j * k]));
-                            //    break;
-                            //}
                         }
-                        //else
-                        //{
-                        //    // either square does not exist or friendly piece
-                        //    break;
-                        //}
                     }
-
                 }
-
-
             }
         }
-
-        //MakeMoveTemporary(ref chessBoard, reverse, oldTargetSquare, true);
-        //NewMakeMoveTemporary(chessBoard, move, true, oldTargetSquarePiece, oldCastlingOptions);
         kingsCastling[colourToMove] = oldCastlingOptions;
         return true;
     }
 
-    public static bool OldIsKingSafeAfterMove(Piece[,] chessBoard, Colour colourToMove, Move move)
-    {
-        Piece oldTargetSquare = new Piece(chessBoard[move.targetPos.x, move.targetPos.y].type, chessBoard[move.targetPos.x, move.targetPos.y].colour);
-        CastlingOptions oldCastlingOptions = kingsCastling[colourToMove];
-        //MakeMoveTemporary(ref chessBoard, move, new Piece(), false);
-
-        MakeMoveTemporary(ref chessBoard, move, false);
-
-        //Position thisKingPosition = FindPiecePosition(new Piece(PieceType.King, colourToMove), chessBoard);
-        Position thisKingPosition = kingsPosition[colourToMove];
-        //Debug.Log("The kings position is: " + thisKingPosition.x + ", " + thisKingPosition.y);
-
-        Colour oppositeColour = SwitchColour(colourToMove);
-
-
-        // check all knights first
-        for (int i = 0; i < knightOffsets.Length; i++)
-        {
-            if (SquareExists(thisKingPosition.x + knightOffsets[i].x, thisKingPosition.y + knightOffsets[i].y))
-            {
-                if (chessBoard[thisKingPosition.x + knightOffsets[i].x, thisKingPosition.y + knightOffsets[i].y].colour == oppositeColour)
-                {
-                    if (chessBoard[thisKingPosition.x + knightOffsets[i].x, thisKingPosition.y + knightOffsets[i].y].type == PieceType.Knight)
-                    {
-                        //MakeMoveTemporary(ref chessBoard, reverse, oldTargetSquare, true);
-                        MakeMoveTemporary(ref chessBoard, move, true, oldTargetSquare, oldCastlingOptions);
-                        //kingsCastling[colourToMove] = oldCastlingOptions;
-
-                        //Debug.Log("The knight position is " + (thisKingPosition.x + knightOffsets[i].x) + ", " + (thisKingPosition.y + knightOffsets[i].y));
-
-                        return false;
-                    }
-                }
-            }
-        }
-
-
-        for (int i = -1; i <= 1; i++)
-        {
-            for (int j = -1; j <= 1; j++)
-            {
-                if (i == 0 && j == 0)
-                {
-                    continue;
-                    // this is the same square as the king
-                }
-
-                if (SquareExists(thisKingPosition.x + i, thisKingPosition.y + j))
-                {
-                    if (chessBoard[thisKingPosition.x + i, thisKingPosition.y + j].colour == colourToMove)
-                    {
-                        // the king is safe here
-                        // friendly piece blocking and protecting the king from other pieces
-                        continue;
-                    }
-
-                    if ((i == 0 && j != 0) || (j == 0 && i != 0))
-                    {
-                        // up down
-                        for (int k = 1; k < 8; k++)
-                        {
-                            if (SquareExists(thisKingPosition.x + i * k, thisKingPosition.y + j * k))
-                            {
-                                if ((chessBoard[thisKingPosition.x + i * k, thisKingPosition.y + j * k].type == PieceType.Rook ||
-                                    chessBoard[thisKingPosition.x + i * k, thisKingPosition.y + j * k].type == PieceType.Queen ||
-                                    chessBoard[thisKingPosition.x + i, thisKingPosition.y + j].type == PieceType.King) &&
-                                    chessBoard[thisKingPosition.x + i * k, thisKingPosition.y + j * k].colour == oppositeColour)
-                                {
-                                    //MakeMoveTemporary(ref chessBoard, reverse, oldTargetSquare, true);
-                                    MakeMoveTemporary(ref chessBoard, move, true, oldTargetSquare, oldCastlingOptions);
-                                    //kingsCastling[colourToMove] = oldCastlingOptions;
-
-                                    if (i == 0)
-                                    {
-                                        //Debug.Log("Vertical check by " + chessBoard[thisKingPosition.x + i * k, thisKingPosition.y + j * k].type);
-                                    }
-                                    else
-                                    {
-                                        //Debug.Log("Horizontal check by " + chessBoard[thisKingPosition.x + i * k, thisKingPosition.y + j * k].type);
-                                    }
-                                    return false;
-                                }
-                                else if (chessBoard[thisKingPosition.x + i * k, thisKingPosition.y + j * k].type != PieceType.None)
-                                {
-                                    break;
-                                    // piece blocking the path (enemy piece that cannot do damage from there or a friendly piece)
-                                }
-                            }
-                            else
-                            {
-                                break;
-                                // square does not exist
-                            }
-                        }
-                    }
-                    else if (i != 0 && j != 0)
-                    {
-                        // diagonal
-                        // pawns
-                        if (chessBoard[thisKingPosition.x + i, thisKingPosition.y + j].colour == oppositeColour)
-                        {
-                            // check if pawn
-                            if (chessBoard[thisKingPosition.x + i, thisKingPosition.y + j].type == PieceType.Pawn)
-                            {
-                                // if opposite color is black
-                                if (oppositeColour == Colour.Black)
-                                {
-                                    // check if pawn is above king (it will be a diagonal for sure already)
-                                    if (thisKingPosition.y < thisKingPosition.y + j)
-                                    {
-                                        //MakeMoveTemporary(ref chessBoard, reverse, oldTargetSquare, true);
-                                        MakeMoveTemporary(ref chessBoard, move, true, oldTargetSquare, oldCastlingOptions);
-                                        //kingsCastling[colourToMove] = oldCastlingOptions;
-                                        //Debug.Log("Pawn above");
-                                        return false;
-                                    }
-                                }
-                                else
-                                {
-                                    // check if pawn is below king (it will be a diagonal for sure already)
-                                    if (thisKingPosition.y > thisKingPosition.y + j)
-                                    {
-                                        //MakeMoveTemporary(ref chessBoard, reverse, oldTargetSquare, true);
-                                        MakeMoveTemporary(ref chessBoard, move, true, oldTargetSquare, oldCastlingOptions);
-                                        //kingsCastling[colourToMove] = oldCastlingOptions;
-                                        //Debug.Log("Pawn below");
-                                        return false;
-                                    }
-                                }
-                            }
-                        }
-                        // now other pieces
-                        for (int k = 1; k < 8; k++)
-                        {
-                            if (SquareExists(thisKingPosition.x + i * k, thisKingPosition.y + j * k))
-                            {
-                                if ((chessBoard[thisKingPosition.x + i * k, thisKingPosition.y + j * k].type == PieceType.Queen ||
-                                    chessBoard[thisKingPosition.x + i * k, thisKingPosition.y + j * k].type == PieceType.Bishop ||
-                                    chessBoard[thisKingPosition.x + i, thisKingPosition.y + j].type == PieceType.King) &&
-                                    chessBoard[thisKingPosition.x + i * k, thisKingPosition.y + j * k].colour == oppositeColour)
-                                {
-                                    //Debug.Log("Diagonal by " + chessBoard[thisKingPosition.x + i * k, thisKingPosition.y + j * k].type);
-                                    //MakeMoveTemporary(ref chessBoard, reverse, oldTargetSquare, true);
-                                    MakeMoveTemporary(ref chessBoard, move, true, oldTargetSquare, oldCastlingOptions);
-                                    //kingsCastling[colourToMove] = oldCastlingOptions;
-                                    return false;
-                                }
-                                else if (chessBoard[thisKingPosition.x + i * k, thisKingPosition.y + j * k].type != PieceType.None)
-                                {
-                                    // encountered a piece
-                                    break;
-                                }
-                            }
-                            else
-                            {
-                                // either square does not exist or friendly piece
-                                break;
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
-        //MakeMoveTemporary(ref chessBoard, reverse, oldTargetSquare, true);
-        MakeMoveTemporary(ref chessBoard, move, true, oldTargetSquare, oldCastlingOptions);
-        //kingsCastling[colourToMove] = oldCastlingOptions;
-        return true;
-    }
-
+    
     public static int Sign(int n)
     {
         if (n >= 0)
@@ -1876,7 +1136,7 @@ public static class Chess
         }
     }
 
-    public static bool NewIsLegalMove(byte[,] board, byte pieceToMove, Move move, byte colourToMoveByte)
+    public static bool IsLegalMove(byte[,] board, byte pieceToMove, Move move, byte colourToMoveByte)
     {
         int startX = move.startPos.x;
         int startY = move.startPos.y;
@@ -1907,10 +1167,6 @@ public static class Chess
 
         if (IsPieceType(pieceToMove, PieceStuff.King) && startY == targetY && Mathf.Abs(startX - targetX) == 2 && kingsCastling[colourToMove] != CastlingOptions.None)
         {
-            if (IsColour(pieceToMove, PieceStuff.White))
-            {
-                Debug.Log("Checking white's castling");
-            }
 
             // castling shenanigans
             if ((kingsCastling[colourToMove] == CastlingOptions.Kingside || kingsCastling[colourToMove] == CastlingOptions.Both) && targetX == 6)
@@ -2066,7 +1322,6 @@ public static class Chess
                         // one square forward
                         if (board[targetX, targetY] != PieceStuff.None)
                         {
-                            Debug.Log("Something one square in front");
                             return false;
                         }
                     }
@@ -2105,230 +1360,4 @@ public static class Chess
         return false;
     }
 
-    public static bool IsLegalMove(Piece[,] board, Piece pieceToMove, Move move, Colour colourToMove)
-    {
-        int startX = move.startPos.x;
-        int startY = move.startPos.y;
-        int targetX = move.targetPos.x;
-        int targetY = move.targetPos.y;
-
-        if (startX == targetX && startY == targetY)
-        {
-            return false;
-        }
-
-        if (colourToMove == board[targetX, targetY].colour)
-        {
-            return false;
-        }
-
-        if (pieceToMove.colour != colourToMove)
-        {
-            return false;
-        }
-
-        if (pieceToMove.type == PieceType.King && Mathf.Abs(startX - targetX) <= 1 && Mathf.Abs(startY - targetY) <= 1)
-        {
-            return true;
-        }
-
-
-        if (pieceToMove.type == PieceType.King && startY == targetY && Mathf.Abs(startX - targetX) == 2 && kingsCastling[colourToMove] != CastlingOptions.None)
-        {
-            if (pieceToMove.colour == Colour.White)
-            {
-                Debug.Log("Checking white's castling");
-            }
-            // castling shenanigans
-            if ((kingsCastling[colourToMove] == CastlingOptions.Kingside || kingsCastling[colourToMove] == CastlingOptions.Both) && targetX == 6)
-            {
-                if (board[5, startY].type == PieceType.None && board[6, startY].type == PieceType.None)
-                {
-                    if (board[7, startY].type == PieceType.Rook && board[7, startY].colour == colourToMove)
-                    {
-                        return true;
-                    }
-                }
-            }
-            if ((kingsCastling[colourToMove] == CastlingOptions.Queenside || kingsCastling[colourToMove] == CastlingOptions.Both) && targetX == 2)
-            {
-                if (board[1, startY].type == PieceType.None && board[2, startY].type == PieceType.None && board[3, startY].type == PieceType.None && board[0, startY].type == PieceType.Rook && board[0, startY].colour == colourToMove)
-                {
-                    // add queenside castling move
-                    return true;
-                }
-            }
-        }
-        else if (pieceToMove.type == PieceType.Knight)
-        {
-            if (Mathf.Abs(startX - targetX) == 1 && Mathf.Abs(startY - targetY) == 2)
-            {
-                return true;
-            }
-            else if (Mathf.Abs(startX - targetX) == 2 && Mathf.Abs(startY - targetY) == 1)
-            {
-                return true;
-            }
-        }
-        else if (pieceToMove.type == PieceType.Bishop)
-        {
-            if (Mathf.Abs(startX - targetX) == Mathf.Abs(startY - targetY))
-            {
-                for (int i = 1; i < Mathf.Abs(startX - targetX); i++)
-                {
-                    if (board[startX + i * Sign(targetX - startX), startY + i * Sign(targetY - startY)].type != PieceType.None)
-                    {
-                        return false;
-                    }
-                }
-                return true;
-            }
-        }
-        else if (pieceToMove.type == PieceType.Rook)
-        {
-            if (startX - targetX == 0 && Mathf.Abs(startY - targetY) != 0)
-            {
-                for (int i = 1; i < Mathf.Abs(startY - targetY); i++)
-                {
-                    if (board[startX, startY + i * Sign(targetY - startY)].type != PieceType.None)
-                    {
-                        return false;
-                    }
-                }
-                return true;
-            }
-            else if (startY - targetY == 0 && Mathf.Abs(startX - targetX) != 0)
-            {
-                for (int i = 1; i < Mathf.Abs(startX - targetX); i++)
-                {
-                    if (board[startX + i * Sign(targetX - startX), startY].type != PieceType.None)
-                    {
-                        return false;
-                    }
-                }
-                return true;
-            }
-        }
-        else if (pieceToMove.type == PieceType.Queen)
-        {
-            if (startX - targetX == 0 && Mathf.Abs(startY - targetY) != 0)
-            {
-                // rook Y
-                for (int i = 1; i < Mathf.Abs(startY - targetY); i++)
-                {
-                    if (board[startX, startY + i * Sign(targetY - startY)].type != PieceType.None)
-                    {
-                        return false;
-                    }
-                }
-                return true;
-            }
-            else if (startY - targetY == 0 && Mathf.Abs(startX - targetX) != 0)
-            {
-                // rook X
-                for (int i = 1; i < Mathf.Abs(startX - targetX); i++)
-                {
-                    if (board[startX + i * Sign(targetX - startX), startY].type != PieceType.None)
-                    {
-                        return false;
-                    }
-                }
-                return true;
-            }
-            else if (Mathf.Abs(startX - targetX) == Mathf.Abs(startY - targetY))
-            {
-                // Bishop
-                for (int i = 1; i < Mathf.Abs(startX - targetX); i++)
-                {
-                    if (board[startX + i * Sign(targetX - startX), startY + i * Sign(targetY - startY)].type != PieceType.None)
-                    {
-                        return false;
-                    }
-
-                }
-                return true;
-            }
-        }
-        else if (pieceToMove.type == PieceType.Pawn)
-        {
-            int direction;
-            bool canMoveTwoSquares;
-            Colour captureColour;
-
-            if (pieceToMove.colour == Colour.White)
-            {
-                canMoveTwoSquares = (startY == 1) ? true : false;
-                direction = 1;
-                captureColour = Colour.Black;
-            }
-            else
-            {
-                canMoveTwoSquares = (startY == 6) ? true : false;
-                direction = -1;
-                captureColour = Colour.White;
-            }
-
-            if (canMoveTwoSquares)
-            {
-                if (targetY - startY != direction && targetY - startY != direction * 2)
-                {
-                    return false;
-                }
-            }
-            else
-            {
-                if (targetY - startY != direction)
-                {
-                    return false;
-                }
-            }
-
-            if (targetX - startX == 0)
-            {
-                // moving in a straight line, the square in front cannot be occupied by any piece
-                if (canMoveTwoSquares)
-                {
-                    if (targetY - startY == direction)
-                    {
-                        // one square forward
-                        if (board[targetX, targetY].type != PieceType.None)
-                        {
-                            return false;
-                        }
-                    }
-                    else
-                    {
-                        // two squares forward
-                        if (board[targetX, targetY - direction].type != PieceType.None || board[targetX, targetY].type != PieceType.None)
-                        {
-                            return false;
-                        }
-                    }
-                }
-                else
-                {
-                    if (board[targetX, targetY].type != PieceType.None)
-                    {
-                        // one square forward
-                        return false;
-                    }
-                }
-            }
-
-            if (targetX - startX != 0 && targetY - startY != direction)
-            {
-                // there has been a capture, and during a capture, a pawn can only move one square forward
-                return false;
-            }
-
-            if (targetX - startX != 0 && board[targetX, targetY].colour != captureColour)
-            {
-                return false;
-            }
-
-            return true;
-        }
-
-        return false;
-    }
 }

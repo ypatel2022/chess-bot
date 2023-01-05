@@ -41,7 +41,7 @@ public class BoardGenerator : MonoBehaviour
                 piece = Resources.Load<GameObject>($"Black/{pair.Key}");
             }
 
-            Chess.byteToPrefab[pair.Value] = piece;
+            Chess.byteToPrefab[pair.Value] = piece.GetComponent<SpriteRenderer>();
         }
     }
 
@@ -57,19 +57,15 @@ public class BoardGenerator : MonoBehaviour
 
                 if ((i + j) % 2 == 0)
                 {
-                    //tile = Instantiate(darkTilePrefab, transform);
                     tile = Instantiate(tilePrefab, transform);
-                    tile.GetComponent<Image>().color = darkTileColour;
                     // 121, 78, 35
-                    //tile.GetComponent<Image>().color = new Color(121, 78, 35, 255);
+                    tile.GetComponent<Image>().color = darkTileColour;
                 }
                 else
                 {
-                    //tile = Instantiate(lightTilePrefab, transform);
                     tile = Instantiate(tilePrefab, transform);
-                    tile.GetComponent<Image>().color = lightTileColour;
                     // 200, 178, 158
-                    //tile.GetComponent<Image>().color = new Color(200, 178, 158, 255);
+                    tile.GetComponent<Image>().color = lightTileColour;
                 }
                 BoardSquare square = tile.GetComponent<BoardSquare>();
 
@@ -80,7 +76,6 @@ public class BoardGenerator : MonoBehaviour
                 square.pieceImage.sprite = null;
                 square.pieceImage.useSpriteMesh = true;
                 square.pieceImage.preserveAspect = true;
-                //square.tile.transform.parent = transform;
                 square.tile.name = "Tile " + i + ", " + j;
                 Chess.boardUI[i, j] = square;
                 Chess.board[i, j] = square.pieceOnSquare;
@@ -95,6 +90,4 @@ public class BoardGenerator : MonoBehaviour
     {
         Chess.ConvertFenString(fenString);
     }
-
-
 }

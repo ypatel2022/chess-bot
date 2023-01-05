@@ -25,7 +25,6 @@ public class DragPiece : MonoBehaviour, IBeginDragHandler, IEndDragHandler, IDra
         if (dragging)
         {
             rectTransform.anchoredPosition += eventData.delta / canvas.scaleFactor;
-            //Debug.Log("dragging a piece");
         }
     }
 
@@ -33,8 +32,6 @@ public class DragPiece : MonoBehaviour, IBeginDragHandler, IEndDragHandler, IDra
     {
         if (Chess.newBoard[thisSquare.x, thisSquare.y] != PieceStuff.None && Chess.IsColour(Chess.newBoard[thisSquare.x, thisSquare.y], Chess.ColourToByte(Chess.colourToMove)))
         {
-            // Debug.Log(Chess.kingsPosition[Colour.White].x + ", " + Chess.kingsPosition[Colour.White].y);
-            //Debug.Log("Starting dragging");
             dragging = true;
             startPos = GetComponent<RectTransform>().anchoredPosition;
 
@@ -43,9 +40,7 @@ public class DragPiece : MonoBehaviour, IBeginDragHandler, IEndDragHandler, IDra
             canvas.sortingOrder = 1000;
 
             legalMoves = new List<Move>();
-            //Debug.Log("Before dragging, the castling options are " + Chess.kingsCastling[Chess.colourToMove]);
-            legalMoves = Chess.NewGenerateMovesForPiece(Chess.newBoard[thisSquare.x, thisSquare.y], Chess.newBoard, new Position(thisSquare.x, thisSquare.y));
-            //Debug.Log("the current square is " + thisSquare.x + ", " + thisSquare.y);
+            legalMoves = Chess.GenerateMovesForPiece(Chess.newBoard[thisSquare.x, thisSquare.y], Chess.newBoard, new Position(thisSquare.x, thisSquare.y));
             foreach (Move move in legalMoves)
             {
                 Chess.boardUI[move.targetPos.x, move.targetPos.y].gameObject.GetComponent<Image>().color = Color.red;
@@ -67,11 +62,8 @@ public class DragPiece : MonoBehaviour, IBeginDragHandler, IEndDragHandler, IDra
 
         // this is called last
         dragging = false;
-        //rectTransform.anchoredPosition = startPos;
         rectTransform.anchoredPosition = Vector2.zero;
         canvas.overrideSorting = false;
-
-        //Destroy(gameObject.GetComponent<Canvas>());
     }
 
     public void OnDrop(PointerEventData eventData)
@@ -92,7 +84,6 @@ public class DragPiece : MonoBehaviour, IBeginDragHandler, IEndDragHandler, IDra
                  (move.targetPos.y == 0 && Chess.IsColour(Chess.newBoard[move.startPos.x, move.startPos.y], PieceStuff.Black))))
             {
                 // pawn is promoting
-                Debug.Log("The piece you are draggin shall promote");
                 move.newPromotion = PieceStuff.Queen;
             }
 
@@ -102,24 +93,21 @@ public class DragPiece : MonoBehaviour, IBeginDragHandler, IEndDragHandler, IDra
                 {
                     // castling kingside
                     move.castling = CastlingOptions.Kingside;
-                    //Debug.Log("The current castling options are " + Chess.kingsCastling[Chess.board[move.startPos.x, move.startPos.y].colour]);
                 }
                 else if (move.targetPos.x - move.startPos.x == -2)
                 {
                     move.castling = CastlingOptions.Queenside;
-                    //Debug.Log("The current castling options are " + Chess.kingsCastling[Chess.board[move.startPos.x, move.startPos.y].colour]);
                 }
             }
 
-            if (Chess.NewIsLegalMove(Chess.newBoard, Chess.newBoard[otherSquare.x, otherSquare.y], move, Chess.ColourToByte(Chess.colourToMove)))
+            if (Chess.IsLegalMove(Chess.newBoard, Chess.newBoard[otherSquare.x, otherSquare.y], move, Chess.ColourToByte(Chess.colourToMove)))
             {
-                if (Chess.NewIsKingSafeAfterMove(Chess.newBoard, Chess.ColourToByte(Chess.colourToMove), move))
+                if (Chess.IsKingSafeAfterMove(Chess.newBoard, Chess.ColourToByte(Chess.colourToMove), move))
                 {
-                    //Chess.MakeMovePermanent(ref Chess.board, move);
                     Chess.colourToMove = Chess.SwitchColour(Chess.colourToMove);
 
                     // do the move
-                    Chess.NewMakeMoveTemporary(ref Chess.newBoard, move, false);
+                    Chess.MakeMoveTemporary(ref Chess.newBoard, move, false);
 
                     Chess.UpdateChessBoardUI();
                 }

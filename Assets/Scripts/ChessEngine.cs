@@ -21,9 +21,10 @@ public class ChessEngine : MonoBehaviour
 
     public int positionsEvaluated = 0;
 
-    public Dictionary<BoardInfo, float> transpositionTable = new Dictionary<BoardInfo, float>();
+    // public Dictionary<BoardInfo, float> transpositionTable = new Dictionary<BoardInfo, float>();
 
     public TMP_Text positionsEvaluatedText;
+    public TMP_Text depthToSearchText;
 
     bool isSearching = false;
     void Update()
@@ -33,15 +34,13 @@ public class ChessEngine : MonoBehaviour
             return;
         }
 
-        //Debug.Log(EvaluateBoard());
-
         if (Chess.colourToMove == colourToPlayAs)
         {
-            List<Move> theMovesThatCanBeMade = Chess.NewGenerateMovesForColour(Chess.ColourToByte(colourToPlayAs), Chess.newBoard);
+            List<Move> theMovesThatCanBeMade = Chess.GenerateMovesForColour(Chess.ColourToByte(colourToPlayAs), Chess.newBoard);
 
             if (theMovesThatCanBeMade.Count == 0)
             {
-                //Debug.Log("Bot be checkmated");
+                // Bot is checkmated
                 Debug.Break();
             }
             else
@@ -49,7 +48,6 @@ public class ChessEngine : MonoBehaviour
                 positionsEvaluated = 0;
 
                 // find best move
-                //Piece[,] copy = Chess.DuplicateBoard(Chess.board);
                 byte[,] boardCopy = Chess.CloneBoard(Chess.newBoard);
 
                 CastlingOptions oldCastling = Chess.kingsCastling[colourToPlayAs];
@@ -61,7 +59,7 @@ public class ChessEngine : MonoBehaviour
 
                 Chess.kingsCastling[colourToPlayAs] = oldCastling;
 
-                Chess.NewMakeMoveTemporary(ref Chess.newBoard, bestMove, false);
+                Chess.MakeMoveTemporary(ref Chess.newBoard, bestMove, false);
 
                 Chess.UpdateChessBoardUI();
                 Chess.colourToMove = Chess.SwitchColour(Chess.colourToMove);
@@ -78,43 +76,27 @@ public class ChessEngine : MonoBehaviour
 
         foreach (Move m in possibleMoves)
         {
-            // reverse move
-            //Move reverseMove = new Move(new Position(m.targetPos.x, m.targetPos.y), new Position(m.startPos.x, m.startPos.y));
-            // killed piece
-            //Piece oldPiece = new Piece(board[m.targetPos.x, m.targetPos.y]);
-            //CastlingOptions oldCastling = Chess.kingsCastling[colourToPlayAs];
-
             byte[,] boardClone = Chess.CloneBoard(board);
 
             float score = 0;
 
-
             score = AlphaBetaMiniMax(m, depthToSearch, float.MinValue, float.MaxValue, false, boardClone);
-
-
-            // reverse move
-            //Chess.MakeMoveTemporary(ref Chess.board, reverseMove, oldPiece.type != PieceType.None ? oldPiece : new Piece(), oldPiece.type != PieceType.None);
-            // Chess.MakeMoveTemporary(ref board, m, true, oldPiece, oldCastling);
-
 
             if (score > bestScore)
             {
                 bestScore = score;
                 bestMove = new Move(m.startPos, m.targetPos);
             }
-
         }
 
         isSearching = false;
-
 
         return bestMove;
     }
 
     float AlphaBetaMiniMax(Move move, int depth, float alpha, float beta, bool isMaximisingPlayer, byte[,] board)
     {
-        //Chess.MakeMoveTemporary(ref Chess.board, move, new Piece(), false);
-        Chess.NewMakeMoveTemporary(ref board, move, false);
+        Chess.MakeMoveTemporary(ref board, move, false);
 
         // check depth is 0 first so possible moves arent checked
         if (depth == 0)
@@ -123,7 +105,7 @@ public class ChessEngine : MonoBehaviour
         }
 
         // check if game is over
-        List<Move> theMovesThatCanBeMade = Chess.NewGenerateMovesForColour(isMaximisingPlayer ? Chess.ColourToByte(colourToPlayAs) : Chess.ColourToByte(Chess.SwitchColour(colourToPlayAs)), board);
+        List<Move> theMovesThatCanBeMade = Chess.GenerateMovesForColour(isMaximisingPlayer ? Chess.ColourToByte(colourToPlayAs) : Chess.ColourToByte(Chess.SwitchColour(colourToPlayAs)), board);
 
 
         if (theMovesThatCanBeMade.Count == 0)
@@ -143,26 +125,12 @@ public class ChessEngine : MonoBehaviour
 
             foreach (Move m in theMovesThatCanBeMade)
             {
-                //int additionalScore = pieceValue[Chess.board[m.targetPos.x, m.targetPos.y].pieceOnSquare.type];
-
-                // reverse move
-                //Move reverseMove = new Move(new Position(m.targetPos.x, m.targetPos.y), new Position(m.startPos.x, m.startPos.y), m.promotion, m.castling, m.enPassant);
-                // killed piece
-                //Piece oldPiece = new Piece(board[m.targetPos.x, m.targetPos.y]);
-                //CastlingOptions oldCastling = Chess.kingsCastling[colourToPlayAs];
-
                 byte[,] boardClone = Chess.CloneBoard(board);
 
                 float eval = AlphaBetaMiniMax(m, depth - 1, alpha, beta, false, boardClone);
 
                 maxScore = Mathf.Max(maxScore, eval);
                 alpha = Mathf.Max(alpha, eval);
-
-                // reverse move
-                //Chess.MakeMoveTemporary(ref Chess.board, reverseMove, oldPiece.type != PieceType.None ? oldPiece : new Piece(), oldPiece.type != PieceType.None);
-                //Chess.MakeMoveTemporary(ref Chess.board, reverseMove, oldPiece, true);
-                //Chess.kingsCastling[isMaximisingPlayer ? colourToPlayAs : Chess.SwitchColour(colourToPlayAs)] = oldCastling;
-                //Chess.MakeMoveTemporary(ref board, m, true, oldPiece, oldCastling);
 
                 // beta cutoff
                 if (beta <= alpha)
@@ -179,27 +147,11 @@ public class ChessEngine : MonoBehaviour
 
             foreach (Move m in theMovesThatCanBeMade)
             {
-
-                // reverse move
-                // reverse move
-                //Move reverseMove = new Move(new Position(m.targetPos.x, m.targetPos.y), new Position(m.startPos.x, m.startPos.y), m.promotion, m.castling, m.enPassant);
-                // killed piece
-                //Piece oldPiece = new Piece(board[m.targetPos.x, m.targetPos.y]);
-                //CastlingOptions oldCastling = Chess.kingsCastling[Chess.SwitchColour(colourToPlayAs)];
-
                 byte[,] boardClone = Chess.CloneBoard(board);
-
 
                 float eval = AlphaBetaMiniMax(m, depth - 1, alpha, beta, true, boardClone);
                 minScore = Mathf.Min(minScore, eval);
                 beta = Mathf.Min(beta, eval);
-
-
-                // reverse move
-                //Chess.MakeMoveTemporary(ref Chess.board, reverseMove, oldPiece.type != PieceType.None ? oldPiece : new Piece(), oldPiece.type != PieceType.None);
-                //Chess.MakeMoveTemporary(ref Chess.board, reverseMove, oldPiece, true);
-                //Chess.kingsCastling[isMaximisingPlayer ? colourToPlayAs : Chess.SwitchColour(colourToPlayAs)] = oldCastling;
-                //Chess.MakeMoveTemporary(ref board, m, true, oldPiece, oldCastling);
 
                 // alpha cutoff
                 if (beta <= alpha)
@@ -216,10 +168,11 @@ public class ChessEngine : MonoBehaviour
         positionsEvaluated++;
 
         BoardInfo boardInfo = new BoardInfo(Chess.CloneBoard(board), Chess.kingsCastling);
-        if (transpositionTable.ContainsKey(boardInfo))
-        {
-            return transpositionTable[boardInfo];
-        }
+        
+        //if (transpositionTable.ContainsKey(boardInfo))
+        //{
+        //    return transpositionTable[boardInfo];
+        //}
 
         float score = 0;
 
@@ -238,8 +191,7 @@ public class ChessEngine : MonoBehaviour
             }
         }
 
-        transpositionTable[boardInfo] = score;
-
+        // transpositionTable[boardInfo] = score;
 
         return score;
     }
@@ -247,6 +199,7 @@ public class ChessEngine : MonoBehaviour
     public void SetDepthToSearch(float n)
     {
         depthToSearch = (int)n;
+        depthToSearchText.text = $"Depth to Search: {depthToSearch}";
     }
 
 }
