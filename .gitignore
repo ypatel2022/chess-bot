@@ -12,6 +12,8 @@
 /.vscode/
 /.plastic/
 
+/Builds/
+
 ignore.conf
 .vsconfig
 
